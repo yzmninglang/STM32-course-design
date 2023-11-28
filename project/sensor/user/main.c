@@ -12,7 +12,10 @@
 #define LED_RED PBout(0)
 
 #define MIN_POWER 6.8
-
+int LeftSensorValue1 = 0;
+int LeftSensorValue2 = 0;
+int RightSensorValue1 = 0;
+int RightSensorValue2 = 0;
 
 
 struct Obstacle
@@ -163,6 +166,68 @@ struct Obstacle Avoid_Path_Detecet(int dis)
 	
 }
 
+void Left_change()
+{
+	EXTI_ClearITPendingBit(EXTI_Line14);
+	if (flag_run)
+	{
+			car_set_motor_speed(2800, 2800);
+			car_turn_right_place();
+			printf("Left_change\r\n");
+			// flag_change=0;
+			while (PCin(13) == 0 || PBin(10) == 0)
+			{
+				printf("Left_change\r\n");
+			};
+			car_brake();
+	}
+}
+
+void Right_change()
+{
+	EXTI_ClearITPendingBit(EXTI_Line15);
+	if (flag_run)
+	{
+			car_set_motor_speed(2800, 2800);
+			car_turn_left_place();
+			printf("Right_change\r\n");
+			// flag_change=0;
+			while (PCin(13) == 0 || PBin(10) == 0)
+			{
+				printf("Right_change\r\n");
+			};
+			car_brake();
+	}
+}
+
+void Trace()
+{
+
+		if(flag_run){
+			
+				LeftSensorValue1  = PCin(14);
+				RightSensorValue1 = PCin(15);
+				LeftSensorValue2  = PCin(13);
+				RightSensorValue2 = PBin(10);
+				
+				if (LeftSensorValue2 == 1 && RightSensorValue2 == 1 ) { 
+					car_forward();        
+				} 
+				else if (LeftSensorValue2 == 1 && RightSensorValue2 == 0 ) {
+					car_turn_right_place(); 
+				}
+				else if (LeftSensorValue2 == 0 && RightSensorValue2 == 1) {
+					car_turn_left_place();  
+				}
+				else {
+					car_forward(); 
+				}
+		
+		}else{
+			car_brake();
+		}
+
+}
 
 
 void timer1()
@@ -203,7 +268,12 @@ int main(void){
 	ADC_init(ADC_CH0);
 	car_init();
 	//初始化PA8为外部触发中断：按键
-	EXTI_QuickInit(HW_EXTIA, EXTI_Pin_8, 3, 3);
+	EXTI_QuickInit(HW_EXTIA, EXTI_Pin_8, 3, 3,1);
+	EXTI_QuickInit(HW_EXTIC, EXTI_Pin_14, 3, 3,0);
+	EXTI_QuickInit(HW_EXTIC, EXTI_Pin_15, 3, 3,0);
+
+	EXTI_CallbackInstall(EXTI_Pin_14,  Left_change);
+	EXTI_CallbackInstall(EXTI_Pin_15, Right_change);
 	EXTI_CallbackInstall(EXTI_Pin_8, key_int);	
 	//TIM1设置为成功
 	steer_sg90_init(TIM1, PWM_CH4);
@@ -219,9 +289,15 @@ int main(void){
 	int trun_time=200;
 	while(1)
 	{
-		RightSensorValue1 = PCin(15);
-		printf("%d",RightSensorValue1);
-		SYSTICK_DelayMs(100);
+		// Trace();
+		// printf("hell0");
+			if (flag_run)
+			{
+					car_forward();
+			}
+		// RightSensorValue1 = PCin(15);
+		// printf("%d",RightSensorValue1);
+		// SYSTICK_DelayMs(100);
 	// car_set_motor_speed(3500,3500);
 	// // car_turn_left();
 	// // car_turn_left_place();

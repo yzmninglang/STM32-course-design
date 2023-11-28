@@ -1,11 +1,11 @@
 /**
   ******************************************************************************
   * @file    exti.h
-  * @author  ÕÅÎÄ³¬ 
+  * @author  ï¿½ï¿½ï¿½Ä³ï¿½ 
 	* @qq      269426626
   * @version V1.0
   * @date    2016.8.22
-  * @note    ´Ë³ÌÐòÎªARMÖÐEXTIµÄµ×²ã±à³Ì£¨ÒÀ¸½ÓÚ¹Ù·½µ×²ã¿âµÄ¶þ´Î·â×°£©
+  * @note    ï¿½Ë³ï¿½ï¿½ï¿½ÎªARMï¿½ï¿½EXTIï¿½Äµ×²ï¿½ï¿½Ì£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ú¹Ù·ï¿½ï¿½×²ï¿½ï¿½Ä¶ï¿½ï¿½Î·ï¿½×°ï¿½ï¿½
   ******************************************************************************
   */
 #ifndef __CH_LIB_EXTI_H__
@@ -43,7 +43,7 @@
 #define EXTI_Pin_14       GPIO_PinSource14         
 #define EXTI_Pin_15       GPIO_PinSource15         
  
-/* EXTI¶Ë¿Ú¶¨Òå */
+/* EXTIï¿½Ë¿Ú¶ï¿½ï¿½ï¿½ */
 #define HW_EXTIA          GPIO_PortSourceGPIOA  
 #define HW_EXTIB          GPIO_PortSourceGPIOB  
 #define HW_EXTIC          GPIO_PortSourceGPIOC  
@@ -53,7 +53,7 @@
 typedef void (*GPIO_CallBackType)(void);
 
 /* API functions */
-void EXTI_QuickInit(int instance, int EXTI_Pin_x,int preepri, int subpri);
+void EXTI_QuickInit(int instance, int EXTI_Pin_x,int preepri, int subpri,int );
 void EXTI_IRQcmd(int instance, int EXTI_Pin_x,FunctionalState ITsta);
 void EXTI_CallbackInstall(int EXTI_Pin_x, GPIO_CallBackType AppCBFun);
 

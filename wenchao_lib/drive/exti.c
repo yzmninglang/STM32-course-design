@@ -31,7 +31,7 @@ static GPIO_CallBackType GPIO_CallBackTable[16] = {NULL};
  * @param[in]   preepri 抢占优先级，可选值0,1,2,3
  * @param[in]   subpri  响应优先级，可选值0,1,2,3
  */
-void EXTI_QuickInit(int instance, int EXTI_Pin_x,int preepri, int subpri)
+void EXTI_QuickInit(int instance, int EXTI_Pin_x,int preepri, int subpri,int Trigger)
 {	
 		int EXTIx_IRQn;
 	
@@ -45,8 +45,18 @@ void EXTI_QuickInit(int instance, int EXTI_Pin_x,int preepri, int subpri)
   	GPIO_EXTILineConfig(instance, EXTI_Pin_x); 
 
   	EXTI_InitStructure.EXTI_Line    = 0x01 << EXTI_Pin_x;	
-  	EXTI_InitStructure.EXTI_Mode    = EXTI_Mode_Interrupt;	
-  	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
+  	EXTI_InitStructure.EXTI_Mode    = EXTI_Mode_Interrupt;
+	if(Trigger==1)
+	{
+
+		EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
+
+	}else
+	{
+		EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;
+
+	}
+  	// EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
   	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
   	EXTI_Init(&EXTI_InitStructure);	                      					//根据EXTI_InitStruct中指定的参数初始化外设EXTI寄存器
 
