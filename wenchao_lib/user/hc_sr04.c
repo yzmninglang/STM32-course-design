@@ -21,7 +21,7 @@ void hc_sr04_init(void){
 	
 	TRIG = 0;
 	
-	TIM_us_Init_org(HC_SR04_TIMERX, 40000, 72);	       //定时40ms，最多测试680cm
+	TIM_us_Init_org(HC_SR04_TIMERX, 10000, 72);	       //定时40ms，最多测试680cm
 	TIM_Cmd(HC_SR04_TIMERX, DISABLE);  
 	
 	if(HC_SR04_TIMERX == TIM2) 	TIMER_CallbackInstall(HW_TIMER2, HC_SR04_timer);	 

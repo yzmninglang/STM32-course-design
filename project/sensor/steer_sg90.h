@@ -25,6 +25,6 @@
 */
 
 void steer_sg90_init(TIM_TypeDef* TIMx, u8 PWM_CHx);
-void steer_sg90_run_to_angle(u8 angle);
+void steer_sg90_run_to_angle(TIM_TypeDef* TIMx, u8 PWM_CHx, u8 angle)
 
 #endif

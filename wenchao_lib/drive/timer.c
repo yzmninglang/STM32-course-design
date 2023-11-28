@@ -158,10 +158,10 @@ u8 TIM_us_Init(TIM_TypeDef* TIMx, u32 Tim_us, u16 TIM_IT, u16 Subpri,FunctionalS
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = Subpri;   
 	NVIC_InitStructure.NVIC_IRQChannelCmd = NewState;                                   
 	NVIC_Init(&NVIC_InitStructure);
-	if(TIMx==TIM1) 
+	if(TIMx==TIM3) 
 	{
 
-		TIM_Cmd(TIM1, DISABLE);  
+		TIM_Cmd(TIM3, DISABLE);  
 	}else
 	{
 

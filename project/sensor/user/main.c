@@ -2,7 +2,7 @@
 #include "car_ctrl.h"
 #include "hc_sr04.h"
 #include "valuepack.h"
-
+#include "steer_sg90.h"
 
 #define KEY_CTRL PAin(8)
 
@@ -12,6 +12,17 @@
 #define LED_RED PBout(0)
 
 #define MIN_POWER 6.8
+
+
+
+struct Obstacle
+{
+	u8 right_ultrasonic;
+	u8 left_ultrasonic;
+	u8 forword_ultrasonic;
+	u8 left_infrared;
+	u8 right_infrared;
+};
 
 u8 txbuf[33]={1,7,3,4};
 u8 rxbuf[33]={1,9,3,4};
@@ -26,6 +37,8 @@ void power_alarm(void);
 void avoid_func_hw(void);
 void control_by_flag(char Res);
 void Obstacle_avoidance(int dis,int time_delay);
+
+struct Obstacle Avoid_Path_Detecet(int dis);
 //串口2接收中断函数
 void uart2(uint16_t Res)
 {		
@@ -73,10 +86,89 @@ void timer2(){
 
 	}
 }
+
+struct Obstacle Avoid_Path_Detecet(int dis)
+{
+	// 左右两边前方红外避障
+
+	// 先规定前后左右都没有障碍物
+		struct Obstacle Obstacle_detection;
+		Obstacle_detection.forword_ultrasonic=0;
+		Obstacle_detection.right_ultrasonic=0;
+		Obstacle_detection.left_ultrasonic=0;
+		Obstacle_detection.left_infrared=0;
+		Obstacle_detection.right_infrared=0;
+
+
+		int temp;
+		int LeftSensorValue = 0;
+		int RightSensorValue = 0;
+		// 超声波测距
+		int distance = 0;
+		distance = get_hc_sr04_value_by_median_filter();
+		LeftSensorValue  = PAin(4);
+		RightSensorValue = PAin(6);
+		// 红外寻迹
+		printf("right:%d left:%d dis:%d\r\n",RightSensorValue,LeftSensorValue,distance);
+		steer_sg90_run_to_angle( TIM1, PWM_CH4, 90);
+		SYSTICK_DelayMs(2000);
+		distance = get_hc_sr04_value_by_median_filter();
+		SYSTICK_DelayMs(100);
+		if(1)
+		{
+			// 如何超声波的测量距离小于规定的距离和，或者左右两边的传感器有反应
+			// 则表示前方有障碍物
+			if(distance<3000 || LeftSensorValue==0||RightSensorValue==0)
+			{
+					car_brake();
+					Obstacle_detection.left_infrared=1-LeftSensorValue;
+					Obstacle_detection.right_infrared=1-RightSensorValue;
+					//右边一定有障碍
+					steer_sg90_run_to_angle( TIM1, PWM_CH4, 20);
+					SYSTICK_DelayMs(2000);
+					temp=get_hc_sr04_value_by_median_filter();
+					if(temp<dis)
+					{Obstacle_detection.right_ultrasonic=1;
+					printf("r:%d\r\n",temp);}
+					SYSTICK_DelayMs(100);
+
+					//前方一定有障碍
+					steer_sg90_run_to_angle( TIM1, PWM_CH4, 90);
+					SYSTICK_DelayMs(2000);
+					temp=get_hc_sr04_value_by_median_filter();
+					if(temp<dis)
+					{Obstacle_detection.forword_ultrasonic=1;
+					printf("f:%d\r\n",temp);}
+					SYSTICK_DelayMs(100);
+
+					// 左边一定有障碍
+					steer_sg90_run_to_angle( TIM1, PWM_CH4, 160);
+					SYSTICK_DelayMs(2000);
+					temp=get_hc_sr04_value_by_median_filter();
+					if(temp<dis)
+					{Obstacle_detection.left_ultrasonic=1;
+					printf("l:%d\r\n",temp);
+					}
+					SYSTICK_DelayMs(100);
+					steer_sg90_run_to_angle( TIM1, PWM_CH4, 90);
+			}
+			else
+			{
+				car_forward();
+			}
+
+		}
+		printf("f:%d,r:%d,l%d\r\n",Obstacle_detection.forword_ultrasonic,Obstacle_detection.right_ultrasonic,Obstacle_detection.left_ultrasonic);
+	return Obstacle_detection;
+	
+}
+
+
+
 void timer1()
 {
 	BEEP = ~BEEP;
-	TIM_ClearITPendingBit(TIM1,TIM_IT_Update);
+	TIM_ClearITPendingBit(TIM3,TIM_IT_Update);
 }
 	
 //主函数
@@ -87,8 +179,8 @@ int main(void){
 	
 	TIM_us_Init(TIM2, 500000, TIM_IT_Update,2, ENABLE);	//初始化定时器2，定是时间500ms
  	TIMER_CallbackInstall(HW_TIMER2, timer2);	
-	TIM_us_Init(TIM1, 100, TIM_IT_Update,1, ENABLE);
-	TIMER_CallbackInstall(HW_TIMER1, timer1);
+	TIM_us_Init(TIM3, 100, TIM_IT_Update,1, ENABLE);
+	TIMER_CallbackInstall(HW_TIMER3, timer1);
 //	TIM_Cmd(TIM1,ENABLE);	
 	//串口1：下载串口，调试串口
 	UART_QuickInit(HW_UART1, 9600, 2, 2, ENABLE);  //初始化串口1，波特率9600
@@ -113,16 +205,21 @@ int main(void){
 	//初始化PA8为外部触发中断：按键
 	EXTI_QuickInit(HW_EXTIA, EXTI_Pin_8, 3, 3);
 	EXTI_CallbackInstall(EXTI_Pin_8, key_int);	
-	
+	//TIM1设置为成功
+	steer_sg90_init(TIM1, PWM_CH4);
+	// steer_sg90_run_to_angle( TIM1, PWM_CH4, 90);
 	BEEP = 1;
 	LED_RED = 1;
 	car_set_motor_speed(3500, 3500);
 	while(1)
 	{
 		TraceTail();
+
 	}
 	
 }
+
+
 
 //电量检测函数
 void power_check(){
@@ -156,7 +253,7 @@ void key_int(){
 void power_alarm(){
 			if(flag_power_alarm){			
 					LED_RED = ~LED_RED;
-				TIM_Cmd(TIM1,ENABLE);
+				//TIM_Cmd(TIM1,ENABLE);
 			}else{
 				BEEP = 1;
 			}
@@ -170,13 +267,17 @@ void TraceTail()
 	int LeftSensorValue2 = 0;
 	int RightSensorValue1 = 0;
 	int RightSensorValue2 = 0;
-
+	int distance=0;
+	int LeftSensorValue=0;
+	int RightSensorValue=0;
 		
 	if(flag_run){
 			
 				LeftSensorValue1  = PCin(14);
 				RightSensorValue1 = PCin(15);
-
+				distance = get_hc_sr04_value_by_median_filter();
+				LeftSensorValue  = PAin(4);
+				RightSensorValue = PAin(6);
 				LeftSensorValue2  = PCin(13);
 				RightSensorValue2 = PBin(10);
 				printf("ir is %d, %d, %d, %d \r\n",LeftSensorValue1, LeftSensorValue2, RightSensorValue1, RightSensorValue2 );
@@ -206,6 +307,7 @@ void TraceTail()
 	}
 
 
+	
 //避障程序
 void avoid_func_hw()
 {
@@ -214,6 +316,7 @@ void avoid_func_hw()
 		int distance = 0;
 		SYSTICK_DelayMs(20);
 		distance = get_hc_sr04_value_by_median_filter();
+		printf("distance:%d\r\n",distance);
 		if(flag_run){
 			
 				LeftSensorValue  = PAin(4);
@@ -241,6 +344,7 @@ void Obstacle_avoidance(int dis,int delay_time)
 		int RightSensorValue = PAin(6);
 		int distance = 0;
 		distance = get_hc_sr04_value_by_median_filter();
+		printf("%d",distance);
 		if(distance >= dis)
 			{
 				car_set_motor_speed(3500, 3500);
@@ -276,3 +380,57 @@ void Obstacle_avoidance(int dis,int delay_time)
 }
 
 
+
+
+
+// 测试扭头的代码 while循环中
+// struct Obstacle Obstacle_decide=Avoid_Path_Detecet(2500);
+// 		if(Obstacle_decide.right_ultrasonic==1 && Obstacle_decide.left_ultrasonic==1)
+// 		{
+// 			printf("R and L can't go\r\n");
+// 			car_back();
+// 			SYSTICK_DelayMs(100);
+// 			car_turn_left();
+// 			SYSTICK_DelayMs(100);
+// 			// 左右都不行
+// 			// 返回一段距离，再判断
+
+// 		}else if(Obstacle_decide.left_ultrasonic==1)
+// 		{
+// 			car_back();
+// 			SYSTICK_DelayMs(100);
+// 			printf("L can't go\r\n");
+// 			car_turn_right_place();
+// 			SYSTICK_DelayMs(100);
+// 			// 不能左转，右转
+
+// 		}else if (Obstacle_decide.right_ultrasonic==1)
+// 		{
+// 			car_back();
+// 			SYSTICK_DelayMs(100);
+// 			printf("R can't go\r\n");
+// 			car_turn_left_place();
+// 			SYSTICK_DelayMs(100);
+// 			// 不能右转，左转
+// 		}else if(Obstacle_decide.right_infrared==1)
+// 		{
+// 			car_back();
+// 			SYSTICK_DelayMs(100);
+// 			printf("R can't go\r\n");
+// 			car_turn_left_place();
+// 			SYSTICK_DelayMs(100);
+// 			// 不能右转，左转
+
+// 		}else if(Obstacle_decide.left_infrared==1)
+// 		{
+// 			car_back();
+// 			SYSTICK_DelayMs(100);
+// 			printf("L can't go \r\n");
+// 			//不能左转，右转
+// 			car_turn_right_place();
+// 			SYSTICK_DelayMs(100);
+
+// 		}else
+// 		{
+// 			car_forward();
+// 		}
