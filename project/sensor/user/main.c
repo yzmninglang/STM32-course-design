@@ -200,6 +200,7 @@ void Right_change()
 	}
 }
 
+// 利用中间两个红外对管进行寻迹，但是实际效果并不好，不采用！！！！
 void Trace()
 {
 
@@ -282,19 +283,16 @@ int main(void){
 	LED_RED = 1;
 	car_set_motor_speed(3500, 3500);
 	
-		int LeftSensorValue1 = 0;
-	int LeftSensorValue2 = 0;
-	int RightSensorValue1 = 0;
-	int RightSensorValue2 = 0;
-	int trun_time=200;
+	// int trun_time=200;
 	while(1)
 	{
 		// Trace();
 		// printf("hell0");
-			if (flag_run)
-			{
-					car_forward();
-			}
+		if (flag_run)
+		{
+			car_set_motor_speed(3500,3500);
+				car_forward();
+		}
 		// RightSensorValue1 = PCin(15);
 		// printf("%d",RightSensorValue1);
 		// SYSTICK_DelayMs(100);
