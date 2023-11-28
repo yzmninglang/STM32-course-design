@@ -30,8 +30,9 @@ static GPIO_CallBackType GPIO_CallBackTable[16] = {NULL};
  * @param[in]   EXTI_Pin_x ：x为GPIO引脚号，可选值 0,1,2....15
  * @param[in]   preepri 抢占优先级，可选值0,1,2,3
  * @param[in]   subpri  响应优先级，可选值0,1,2,3
+ *  * @param[in]   Status  状态,ENABLE 和 DISABLE
  */
-void EXTI_QuickInit(int instance, int EXTI_Pin_x,int preepri, int subpri,int Trigger)
+void EXTI_QuickInit(int instance, int EXTI_Pin_x,int preepri, int subpri,int Trigger,FunctionalState Status)
 {	
 		int EXTIx_IRQn;
 	
@@ -57,7 +58,7 @@ void EXTI_QuickInit(int instance, int EXTI_Pin_x,int preepri, int subpri,int Tri
 
 	}
   	// EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
-  	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+  	EXTI_InitStructure.EXTI_LineCmd = Status;
   	EXTI_Init(&EXTI_InitStructure);	                      					//根据EXTI_InitStruct中指定的参数初始化外设EXTI寄存器
 
 	  switch(EXTI_Pin_x)

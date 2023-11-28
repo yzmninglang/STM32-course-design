@@ -53,7 +53,7 @@
 typedef void (*GPIO_CallBackType)(void);
 
 /* API functions */
-void EXTI_QuickInit(int instance, int EXTI_Pin_x,int preepri, int subpri,int );
+void EXTI_QuickInit(int instance, int EXTI_Pin_x,int preepri, int subpri,int,FunctionalState Status);
 void EXTI_IRQcmd(int instance, int EXTI_Pin_x,FunctionalState ITsta);
 void EXTI_CallbackInstall(int EXTI_Pin_x, GPIO_CallBackType AppCBFun);
 

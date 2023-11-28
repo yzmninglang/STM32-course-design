@@ -78,6 +78,7 @@ void control_by_flag(char Res)
 		}
 	}
 }
+
 //定时器2中断函数
 void timer2(){
 	static int i = 0;
@@ -200,7 +201,7 @@ void Right_change()
 	}
 }
 
-// 利用中间两个红外对管进行寻迹，但是实际效果并不好，不采用！！！！
+// Trace：利用中间两个红外对管进行寻迹，但是实际效果并不好，不采用！！！！
 void Trace()
 {
 
@@ -237,6 +238,133 @@ void timer1()
 	TIM_ClearITPendingBit(TIM3,TIM_IT_Update);
 }
 	
+
+
+void Trace_Enable()
+{
+	// 开启外部中断
+	EXTI_QuickInit(HW_EXTIC, EXTI_Pin_14, 3, 3,0,ENABLE);
+	EXTI_QuickInit(HW_EXTIC, EXTI_Pin_15, 3, 3,0,ENABLE);
+
+	EXTI_CallbackInstall(EXTI_Pin_14,  Left_change);
+	EXTI_CallbackInstall(EXTI_Pin_15, Right_change);
+}
+
+void Trace_Disable()
+{
+	// 开启外部中断
+	EXTI_QuickInit(HW_EXTIC, EXTI_Pin_14, 3, 3,0,DISABLE);
+	EXTI_QuickInit(HW_EXTIC, EXTI_Pin_15, 3, 3,0,DISABLE);
+
+	EXTI_CallbackInstall(EXTI_Pin_14,  Left_change);
+	EXTI_CallbackInstall(EXTI_Pin_15, Right_change);
+}
+
+
+// 1.先开始Trace_Enable;
+// 2.开启Trace_No_obstacle_avoidance;
+// 3.有必要的时候请关闭Trace_Disable;
+void Trace_No_obstacle_avoidance()
+{
+		if (flag_run)
+		{
+			car_set_motor_speed(3500,3500);
+			car_forward();
+		}
+}
+
+
+void Trace_No_obstacle_avoidance_NONVIC()
+{
+	// 先定义各个检测器
+	RightSensorValue1  = PCin(14);
+	LeftSensorValue1 = PCin(15);
+	RightSensorValue2  = PCin(13);
+	LeftSensorValue2 = PBin(10);
+	if(flag_run)
+	{
+		if(LeftSensorValue2==1 && RightSensorValue2==1/*||(LeftSensorValue2==0 && RightSensorValue2==0)*/)
+		{
+			car_set_motor_speed(3000,3000);
+			car_forward();		
+
+		}else if(LeftSensorValue2==1 && RightSensorValue2==0)
+		{
+			// 左转
+			car_set_motor_speed(4000,1000);
+			car_forward();
+
+		}else if(LeftSensorValue2==0 && RightSensorValue2==1)
+		{	// 右转
+			car_set_motor_speed(1000,4000);
+			car_forward();
+
+		}else if(LeftSensorValue1==1 && LeftSensorValue2==0 && RightSensorValue1==0)
+		{	
+			car_set_motor_speed(5000,5000);
+			car_turn_left_place();
+		}else if(LeftSensorValue1==0 && RightSensorValue2==0 && RightSensorValue1==1)
+		{	
+			car_set_motor_speed(5000,5000);
+			car_turn_right_place();
+		}else if(LeftSensorValue2==0 && RightSensorValue2==0 &&LeftSensorValue1==0 && RightSensorValue1==0){
+			//car_set_motor_speed(3000,3000);
+			//car_brake();
+		}
+	}
+
+}
+
+
+void Trace_No_obstacle_avoidance_NONVIC()
+{
+	// 先定义各个检测器
+	RightSensorValue1  = PCin(14);
+	LeftSensorValue1 = PCin(15);
+	RightSensorValue2  = PCin(13);
+	LeftSensorValue2 = PBin(10);
+	if(flag_run)
+	{
+		if(LeftSensorValue2==1 && RightSensorValue2==1/*||(LeftSensorValue2==0 && RightSensorValue2==0)*/)
+		{
+			car_set_motor_speed(3000,3000);
+			car_forward();		
+
+		}else if(LeftSensorValue2==1 && RightSensorValue2==0)
+		{
+			// 左转
+			car_set_motor_speed(4000,1000);
+			car_forward();
+
+		}else if(LeftSensorValue2==0 && RightSensorValue2==1)
+		{	// 右转
+			car_set_motor_speed(1000,4000);
+			car_forward();
+
+		}else if(LeftSensorValue1==1 && LeftSensorValue2==0 && RightSensorValue1==0)
+		{	
+			car_set_motor_speed(5000,5000);
+			car_turn_left_place();
+		}else if(LeftSensorValue1==0 && RightSensorValue2==0 && RightSensorValue1==1)
+		{	
+			car_set_motor_speed(5000,5000);
+			car_turn_right_place();
+		}else if(LeftSensorValue2==0 && RightSensorValue2==0 &&LeftSensorValue1==0 && RightSensorValue1==0){
+			//car_set_motor_speed(3000,3000);
+			//car_brake();
+		}
+	}
+
+}
+
+
+Trace_obstacle_avoidance_NONVIC()
+{
+
+
+
+	
+}
 //主函数
 int main(void){
 
@@ -269,12 +397,8 @@ int main(void){
 	ADC_init(ADC_CH0);
 	car_init();
 	//初始化PA8为外部触发中断：按键
-	EXTI_QuickInit(HW_EXTIA, EXTI_Pin_8, 3, 3,1);
-	EXTI_QuickInit(HW_EXTIC, EXTI_Pin_14, 3, 3,0);
-	EXTI_QuickInit(HW_EXTIC, EXTI_Pin_15, 3, 3,0);
+	EXTI_QuickInit(HW_EXTIA, EXTI_Pin_8, 3, 3,1,ENABLE);
 
-	EXTI_CallbackInstall(EXTI_Pin_14,  Left_change);
-	EXTI_CallbackInstall(EXTI_Pin_15, Right_change);
 	EXTI_CallbackInstall(EXTI_Pin_8, key_int);	
 	//TIM1设置为成功
 	steer_sg90_init(TIM1, PWM_CH4);
@@ -286,17 +410,14 @@ int main(void){
 	// int trun_time=200;
 	while(1)
 	{
-		// Trace();
-		// printf("hell0");
-		if (flag_run)
-		{
-			car_set_motor_speed(3500,3500);
-				car_forward();
-		}
-		// RightSensorValue1 = PCin(15);
-		// printf("%d",RightSensorValue1);
-		// SYSTICK_DelayMs(100);
-	// car_set_motor_speed(3500,3500);
+		Trace_No_obstacle_avoidance_NONVIC();
+	// 	// Trace();
+	// 	printf("hell0");
+
+	// 	RightSensorValue1 = PCin(15);
+	// 	printf("%d",RightSensorValue1);
+	// 	SYSTICK_DelayMs(100);
+	// 	car_set_motor_speed(3500,3500);
 	// // car_turn_left();
 	// // car_turn_left_place();
 	// if(flag_run){
@@ -307,7 +428,7 @@ int main(void){
 	// 		LeftSensorValue2  = PCin(13);
 	// 		RightSensorValue2 = PBin(10);
 			
-	// 		if (LeftSensorValue1 == 1 && RightSensorValue1 == 1 && (LeftSensorValue2==0||RightSensorValue2==0) ) { 
+	// 		if (LeftSensorValue1 == 1 && RightSensorValue1 == 1  ) { 
 	// 			// car_back();
 	// 			car_set_motor_speed(3500,3500);
 	// 			car_forward();        
@@ -339,8 +460,9 @@ int main(void){
 	// 	car_brake();
 	// }
 
-	}
+	// }
 	
+}
 }
 
 
@@ -447,7 +569,7 @@ void TraceTail()
 		}else{
 			car_brake();
 		}
-	}
+}
 
 
 	
