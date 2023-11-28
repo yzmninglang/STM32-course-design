@@ -211,9 +211,59 @@ int main(void){
 	BEEP = 1;
 	LED_RED = 1;
 	car_set_motor_speed(3500, 3500);
+	
+		int LeftSensorValue1 = 0;
+	int LeftSensorValue2 = 0;
+	int RightSensorValue1 = 0;
+	int RightSensorValue2 = 0;
+	int trun_time=200;
 	while(1)
 	{
-		TraceTail();
+		RightSensorValue1 = PCin(15);
+		printf("%d",RightSensorValue1);
+		SYSTICK_DelayMs(100);
+	// car_set_motor_speed(3500,3500);
+	// // car_turn_left();
+	// // car_turn_left_place();
+	// if(flag_run){
+			
+	// 		LeftSensorValue1  = PCin(14);
+	// 		RightSensorValue1 = PCin(15);
+
+	// 		LeftSensorValue2  = PCin(13);
+	// 		RightSensorValue2 = PBin(10);
+			
+	// 		if (LeftSensorValue1 == 1 && RightSensorValue1 == 1 && (LeftSensorValue2==0||RightSensorValue2==0) ) { 
+	// 			// car_back();
+	// 			car_set_motor_speed(3500,3500);
+	// 			car_forward();        
+	// 		} 
+	// 		else if (LeftSensorValue1 == 1 && RightSensorValue1 == 0 ) {
+	// 			// car_back();
+	// 			// SYSTICK_DelayMs(100);
+	// 			car_set_motor_speed(6000,2000);
+	// 			car_turn_right_place(); 
+	// 			SYSTICK_DelayMs(trun_time);
+	// 		}
+	// 		else if (LeftSensorValue1 == 0 && RightSensorValue1 == 1) {
+	// 			// car_back();
+	// 			// SYSTICK_DelayMs(100);
+	// 			car_set_motor_speed(2000,6000);
+	// 			car_turn_left_place(); 
+	// 			SYSTICK_DelayMs(trun_time);
+	// 		}
+	// 		else {
+	// 			car_set_motor_speed(3500,3500);
+	// 			car_forward();
+	// 			// car_set_motor_speed(4000,4000);
+	// 			// car_turn_left_place(); 
+	// 		}
+	// 		printf("ir is %d, %d, %d, %d \n",LeftSensorValue1, LeftSensorValue2, RightSensorValue1, RightSensorValue2 );
+
+	
+	// }else{
+	// 	car_brake();
+	// }
 
 	}
 	
@@ -262,7 +312,7 @@ void power_alarm(){
 
 void TraceTail()
 {
-	car_set_motor_speed(3500, 3500);
+	car_set_motor_speed(3000, 3000);
 	int LeftSensorValue1 = 0;
 	int LeftSensorValue2 = 0;
 	int RightSensorValue1 = 0;
@@ -282,22 +332,41 @@ void TraceTail()
 				RightSensorValue2 = PBin(10);
 				printf("ir is %d, %d, %d, %d \r\n",LeftSensorValue1, LeftSensorValue2, RightSensorValue1, RightSensorValue2 );
 				if (LeftSensorValue1 == 1 && RightSensorValue1 == 1 ) { 
-					car_set_motor_speed(4000, 4000);
-					car_forward();        
+					car_set_motor_speed(3000, 3000);
+					car_forward();
+					// SYSTICK_DelayMs(100);        
 				} 
-				else if ((LeftSensorValue1 == 1||LeftSensorValue2==1) && RightSensorValue1 == 0 ) {
-					car_set_motor_speed(3000, 3000);
+				else if (LeftSensorValue1 == 1 && RightSensorValue1 == 0 ) {
+					car_set_motor_speed(2500, 2500);
 					car_turn_right_place();
-//					
-					SYSTICK_DelayMs(50);
-				}
-				else if (LeftSensorValue1 == 0 && (RightSensorValue1 == 1||RightSensorValue2==1)) {
+					while (RightSensorValue2!=0){
+						printf("trun right");
+					}
 					car_set_motor_speed(3000, 3000);
+					car_forward();
+					printf("go out");
+					
+					// if(LeftSensorValue2==1)
+					// {
+					// 	car_forward();
+					// }
+//					
+					// SYSTICK_DelayMs(50);
+				}
+				else if (LeftSensorValue1 == 0 && RightSensorValue1==1) {
+					car_set_motor_speed(2500, 2500);
 					car_turn_left_place(); 
-					SYSTICK_DelayMs(50); 
+					// 如果左边内部传感器为0，说明当前正常
+					while (LeftSensorValue2!=0){
+						printf("trun left");
+					}
+					car_set_motor_speed(3000, 3000);
+					car_forward();
+					printf("go out");
+					// SYSTICK_DelayMs(50); 
 				}
 				else {
-					car_set_motor_speed(4000, 4000);
+					car_set_motor_speed(3000, 3000);
 					car_forward(); 
 				}
 		
