@@ -20,3 +20,4 @@
 !*.c 
 !*.cpp 
 !*.h
+!autocommit.bat
