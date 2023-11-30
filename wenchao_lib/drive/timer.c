@@ -158,15 +158,15 @@ u8 TIM_us_Init(TIM_TypeDef* TIMx, u32 Tim_us, u16 TIM_IT, u16 Subpri,FunctionalS
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = Subpri;   
 	NVIC_InitStructure.NVIC_IRQChannelCmd = NewState;                                   
 	NVIC_Init(&NVIC_InitStructure);
-	if(TIMx==TIM3) 
-	{
+	// if(TIMx==TIM3) 
+	// {
 
-		TIM_Cmd(TIM3, DISABLE);  
-	}else
-	{
+	// 	TIM_Cmd(TIM3, DISABLE);  
+	// }else
+	// {
 
-		TIM_Cmd(TIMx, ENABLE); 
-	}                                                 //初始化NVIC寄存器
+	TIM_Cmd(TIMx, ENABLE); 
+	// }                                                 //初始化NVIC寄存器
                                                          //使能TIMx	
 	return  1;
 } 

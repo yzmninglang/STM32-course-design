@@ -11,7 +11,7 @@
 //RGB灯RED
 #define LED_RED PBout(0)
 
-#define MIN_POWER 6.8
+#define MIN_POWER 8.0
 int LeftSensorValue1 = 0;
 int LeftSensorValue2 = 0;
 int RightSensorValue1 = 0;
@@ -19,7 +19,7 @@ int RightSensorValue2 = 0;
 
 
 int flag_black=0;
-
+int flag_beep=0;
 struct Obstacle
 {
 	u8 right_ultrasonic;
@@ -43,7 +43,7 @@ void avoid_func_hw(void);
 void control_by_flag(char Res);
 void Obstacle_avoidance(int dis,int time_delay);
 void Obstacle_Avoid();
-
+void Trace_No_obstacle_avoidance_NONVIC();
 
 
 struct Obstacle Avoid_Path_Detecet(int dis);
@@ -56,12 +56,14 @@ void uart2(uint16_t Res)
 		{
 			flag_run=~flag_run;
 		}
-		control_by_flag(Res);
+		// control_by_flag(Res)
+		flag_run_char=Res;
+
 }
 void control_by_flag(char Res)
 {
-		if(flag_run != 0 ){	
-			flag_run_char=Res;
+		// if(flag_run != 0 ){			
+		// 	flag_run_char=Res;
 		if(Res == 'U'  ){
 			car_forward();
 		}else if(Res == 'D'){
@@ -71,17 +73,23 @@ void control_by_flag(char Res)
 		}else if(Res == 'R'){
 			car_turn_right_place();   
 		}else if(Res == '1'){
-			car_turn_left();   
+			if(flag_beep)
+			{TIM_Cmd(TIM4,DISABLE);}else{
+				TIM_Cmd(TIM4,ENABLE);
+			}flag_beep=1-flag_beep;  
 		}else if(Res == '3'){
 			car_turn_right();   
 		}else if(Res == 'O'){
 			car_brake();  
 //			flag_run=~flag_run;
-		}else if(Res == '2'|| mode==1){
+		}else if(Res == '2'){
 			//寻迹
-			TraceTail();
+			Trace_No_obstacle_avoidance_NONVIC();
+		}else if(Res == '4')
+		{
+			Obstacle_avoidance(2500,500);
 		}
-	}
+	// }
 }
 
 //定时器2中断函数
@@ -89,9 +97,9 @@ void timer2(){
 	static int i = 0;
 	if (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET){  //检查TIM3更新中断发生与否
 		  TIM_ClearITPendingBit(TIM2, TIM_IT_Update);   //清除TIMx更新中断标志 
-			if(++i >= 10) { PCout(13)= !PCout(13); 	i= 0;	 power_check(); }
+			if(++i >= 10) {  	i= 0;	 power_check(); }
 			power_alarm();
-			LED_RED =  !flag_run;
+			LED_RED =  !LED_RED;
 
 	}
 }
@@ -237,10 +245,12 @@ void Trace()
 }
 
 
-void timer1()
+void timer3()
 {
+	TIM_ClearITPendingBit(TIM4,TIM_IT_Update);
 	BEEP = ~BEEP;
-	TIM_ClearITPendingBit(TIM3,TIM_IT_Update);
+	printf("Tim4\r\n");
+	
 }
 	
 void change_flag_black()
@@ -413,6 +423,8 @@ void Trace_No_obstacle_avoidance_NONVIC()
 
 //}
 //主函数
+// 资源分配：TIM1作为舵机的PWM波，TIM2作为
+// 
 int main(void){
 
 	NVIC_init();
@@ -420,8 +432,10 @@ int main(void){
 	
 	TIM_us_Init(TIM2, 500000, TIM_IT_Update,2, ENABLE);	//初始化定时器2，定是时间500ms
  	TIMER_CallbackInstall(HW_TIMER2, timer2);	
-	TIM_us_Init(TIM3, 100, TIM_IT_Update,1, ENABLE);
-	TIMER_CallbackInstall(HW_TIMER3, timer1);
+//	TIM_us_Init(TIM4, 50, TIM_IT_Update,2, ENABLE);
+//	TIM_Cmd(TIM4, DISABLE); 
+	
+//	TIMER_CallbackInstall(HW_TIMER4, timer3);
 //	TIM_Cmd(TIM1,ENABLE);	
 	//串口1：下载串口，调试串口
 	UART_QuickInit(HW_UART1, 9600, 2, 2, ENABLE);  //初始化串口1，波特率9600
@@ -457,7 +471,7 @@ int main(void){
 	steer_sg90_init(TIM1, PWM_CH4);
 	Trace_Enable();
 	// steer_sg90_run_to_angle( TIM1, PWM_CH4, 90);
-	BEEP = 1;
+	// BEEP = 1;
 	LED_RED = 1;
 	car_set_motor_speed(3500, 3500);
 
@@ -466,11 +480,28 @@ int main(void){
 	// int trun_time=200;
 	while(1)
 	{
-		if(flag_run)
-		{
+//		if(flag_run)
+//		{
+		Trace_No_obstacle_avoidance_NONVIC();
+		// avoid_func_hw();
+
+//			printf("main\r\n");
+//			SYSTICK_DelayUs(100);
+//			TIM_cmd(TIM4,ENABLE);
+			// BEEP=~BEEP;
+			// TIM_Cmd(TIM1,); 
+
+
+
+			// TIM_Cmd(TIM3, ENABLE); 
+
+			//无避障的自动寻迹
 			// Trace_No_obstacle_avoidance_NONVIC();
-			Obstacle_avoidance(2500,500);
-		}
+			
+			
+			// 有避障的自动寻迹
+			// Obstacle_avoidance(2500,500);
+//		}
 	// (2000,50);
 	// Trace_No_obstacle_avoidance_NONVIC();
 	// 	// Trace();
@@ -554,6 +585,7 @@ void key_int(){
 			flag_run = !flag_run;
 			while(KEY_CTRL == 0);
 			LED_RED =  !flag_run;
+			TIM_Cmd(TIM3, ENABLE); 
 		}
 }
 
@@ -561,9 +593,10 @@ void key_int(){
 void power_alarm(){
 			if(flag_power_alarm){			
 					LED_RED = ~LED_RED;
-				//TIM_Cmd(TIM1,ENABLE);
+				// TIM_Cmd(TIM3,ENABLE);
 			}else{
-				BEEP = 1;
+				// BEEP = 1;
+				TIM_Cmd(TIM3,ENABLE);
 			}
 }
 
@@ -680,7 +713,7 @@ void avoid_func_hw()
 		int LeftSensorValue = 0;
 		int RightSensorValue = 0;
 		int distance = 0;
-		SYSTICK_DelayMs(20);
+//		SYSTICK_DelayMs(20);
 		distance = get_hc_sr04_value_by_median_filter();
 		printf("distance:%d\r\n",distance);
 		if(flag_run){
